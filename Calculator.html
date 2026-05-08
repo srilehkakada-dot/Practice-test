@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Calculator</title>
+
+<style>
+
+:root{
+  --text:#ffffff;
+  --muted:rgba(255,255,255,.6);
+  --stroke:rgba(255,255,255,.12);
+
+  --green:#25f59b;
+  --blue:#4da3ff;
+
+  --btn:rgba(255,255,255,.08);
+  --btnH:rgba(255,255,255,.14);
+
+  --shadow:0 20px 60px rgba(0,0,0,.55);
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-family:system-ui;
+  color:var(--text);
+
+  background:
+  radial-gradient(circle at top left, rgba(37,245,155,.25), transparent 35%),
+  radial-gradient(circle at top right, rgba(77,163,255,.25), transparent 35%),
+  linear-gradient(180deg,#050816,#02040c);
+
+  transition:.4s;
+}
+
+/* LIGHT MODE */
+
+body.light{
+  background:
+  radial-gradient(circle at top left, rgba(37,245,155,.15), transparent 35%),
+  radial-gradient(circle at top right, rgba(77,163,255,.15), transparent 35%),
+  linear-gradient(180deg,#edf3ff,#dce8ff);
+
+  color:#111;
+}
+
+body.light .card{
+  background:rgba(255,255,255,.55);
+}
+
+body.light button{
+  color:#111;
+}
+
+body.light .screen,
+body.light .history{
+  background:rgba(255,255,255,.4);
+}
+
+body.light .expr{
+  color:rgba(0,0,0,.5);
+}
+
+/* BACKGROUND FX */
+
+.fx{
+  position:fixed;
+  inset:-50px;
+  pointer-events:none;
+  background:
+  radial-gradient(circle at 20% 20%, rgba(37,245,155,.12), transparent 30%),
+  radial-gradient(circle at 80% 20%, rgba(77,163,255,.12), transparent 30%);
+  filter:blur(30px);
+  animation:move 8s infinite alternate ease-in-out;
+}
+
+@keyframes move{
+  from{ transform:translate(-10px,-10px) scale(1);}
+  to{ transform:translate(10px,10px) scale(1.08);}
+}
+
+.wrap{
+  width:min(430px,92vw);
+  position:relative;
+  z-index:2;
+}
+
+.card{
+  position:relative;
+  overflow:hidden;
+
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--stroke);
+
+  border-radius:24px;
+
+  backdrop-filter:blur(14px);
+
+  box-shadow:var(--shadow);
+}
+
+.card::before{
+  content:"";
+  position:absolute;
+  width:250px;
+  height:250px;
+  left:-120px;
+  top:-120px;
+
+  background:radial-gradient(circle, rgba(37,245,155,.35), transparent 65%);
+  filter:blur(25px);
+}
+
+.card::after{
+  content:"";
+  position:absolute;
+  width:250px;
+  height:250px;
+  right:-120px;
+  top:-120px;
+
+  background:radial-gradient(circle, rgba(77,163,255,.35), transparent 65%);
+  filter:blur(25px);
+}
+
+.inner{
+  position:relative;
+  z-index:2;
+  padding:18px;
+}
+
+/* TOP */
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
+}
+
+.title{
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:.4px;
+}
+
+.top-actions{
+  display:flex;
+  gap:8px;
+}
+
+/* HISTORY */
+
+.history{
+  max-height:120px;
+  overflow:auto;
+
+  background:rgba(0,0,0,.18);
+
+  border:1px solid rgba(255,255,255,.1);
+
+  border-radius:14px;
+
+  padding:10px;
+  margin-bottom:12px;
+}
+
+.historyItem{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px dashed rgba(255,255,255,.1);
+  font-size:12px;
+}
+
+.historyItem:last-child{
+  border:none;
+}
+
+/* SCREEN */
+
+.screen{
+  background:rgba(0,0,0,.2);
+
+  border-radius:16px;
+
+  padding:16px;
+
+  border:1px solid rgba(255,255,255,.1);
+
+  margin-bottom:14px;
+}
+
+.expr{
+  color:var(--muted);
+  font-size:13px;
+  min-height:18px;
+}
+
+.value{
+  font-size:36px;
+  font-weight:900;
+  margin-top:6px;
+  overflow-x:auto;
+}
+
+/* GRID */
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+button{
+  border:none;
+  outline:none;
+
+  padding:15px;
+
+  border-radius:14px;
+
+  cursor:pointer;
+
+  color:white;
+
+  font-size:16px;
+  font-weight:700;
+
+  background:var(--btn);
+
+  border:1px solid rgba(255,255,255,.1);
+
+  transition:.15s;
+
+  position:relative;
+  overflow:hidden;
+}
+
+button:hover{
+  background:var(--btnH);
+  transform:translateY(-2px);
+}
+
+button:active{
+  transform:scale(.96);
+}
+
+button::after{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background:
+  radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.25), transparent 35%);
+  opacity:0;
+  transition:.2s;
+}
+
+button:hover::after{
+  opacity:1;
+}
+
+.op{
+  background:rgba(255,255,255,.12);
+}
+
+.accent{
+  background:linear-gradient(135deg, rgba(37,245,155,.28), rgba(77,163,255,.25));
+}
+
+.span2{
+  grid-column:span 2;
+}
+
+@media(max-width:380px){
+
+  .value{
+    font-size:28px;
+  }
+
+  button{
+    padding:13px;
+  }
+
+}
+
+/* FLOATING MATH SYMBOLS */
+
+.math-bg{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+  z-index:0;
+}
+
+.math-bg span{
+  position:absolute;
+  color:rgba(255,255,255,.05);
+  font-size:55px;
+  font-weight:900;
+  animation:float 14s linear infinite;
+  text-shadow:
+  0 0 12px rgba(77,163,255,.25),
+  0 0 18px rgba(37,245,155,.18);
+}
+
+.math-bg span:nth-child(1){
+  left:10%;
+  top:20%;
+  animation-duration:16s;
+}
+
+.math-bg span:nth-child(2){
+  left:22%;
+  top:75%;
+  animation-duration:19s;
+}
+
+.math-bg span:nth-child(3){
+  left:40%;
+  top:40%;
+  animation-duration:15s;
+}
+
+.math-bg span:nth-child(4){
+  left:60%;
+  top:82%;
+  animation-duration:22s;
+}
+
+.math-bg span:nth-child(5){
+  left:75%;
+  top:25%;
+  animation-duration:18s;
+}
+
+.math-bg span:nth-child(6){
+  left:88%;
+  top:60%;
+  animation-duration:17s;
+}
+
+.math-bg span:nth-child(7){
+  left:35%;
+  top:10%;
+  animation-duration:20s;
+}
+
+.math-bg span:nth-child(8){
+  left:55%;
+  top:55%;
+  animation-duration:21s;
+}
+
+@keyframes float{
+
+  from{
+    transform:
+    translateY(0px)
+    rotate(0deg)
+    scale(1);
+  }
+
+  to{
+    transform:
+    translateY(-50px)
+    rotate(360deg)
+    scale(1.15);
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="math-bg">
+  <span>π</span>
+  <span>∞</span>
+  <span>√</span>
+  <span>∑</span>
+  <span>θ</span>
+  <span>∆</span>
+  <span>+</span>
+  <span>÷</span>
+</div>
+
+<div class="fx"></div>
+
+<div class="wrap">
+
+<div class="card">
+
+<div class="inner">
+
+<div class="topbar">
+
+<div class="title">
+⚡Smart Calculator
+</div>
+
+<div class="top-actions">
+
+<button id="themeToggle">🌙</button>
+
+<button id="clearHistory">
+🗑
+</button>
+
+</div>
+
+</div>
+
+<!-- HISTORY -->
+
+<div class="history" id="history"></div>
+
+<!-- SCREEN -->
+
+<div class="screen">
+
+<div class="expr" id="expr"></div>
+
+<div class="value" id="out">0</div>
+
+</div>
+
+<!-- BUTTONS -->
+
+<div class="grid">
+
+<button class="op" data-action="clear">C</button>
+<button class="op" data-action="back">⌫</button>
+<button class="op" data-action="percent">%</button>
+<button class="op" data-op="/">÷</button>
+
+<button onclick="scientific('sin')">sin</button>
+<button onclick="scientific('cos')">cos</button>
+<button onclick="scientific('tan')">tan</button>
+<button onclick="scientific('sqrt')">√</button>
+
+<button data-num="7">7</button>
+<button data-num="8">8</button>
+<button data-num="9">9</button>
+<button class="op" data-op="*">×</button>
+
+<button data-num="4">4</button>
+<button data-num="5">5</button>
+<button data-num="6">6</button>
+<button class="op" data-op="-">−</button>
+
+<button data-num="1">1</button>
+<button data-num="2">2</button>
+<button data-num="3">3</button>
+<button class="op" data-op="+">+</button>
+
+<button onclick="scientific('pi')">π</button>
+<button data-num="0">0</button>
+<button data-num=".">.</button>
+<button class="accent" data-action="equals">=</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<audio id="clickSound" preload="auto">
+  <source src="C:\Users\srile\Downloads\mixkit-modern-technology-select-3124.wav" type="audio/wav">
+</audio>
+
+<script>
+
+const exprEl = document.getElementById("expr");
+const outEl = document.getElementById("out");
+
+const historyEl = document.getElementById("history");
+
+const clearHistoryBtn = document.getElementById("clearHistory");
+
+const themeToggle = document.getElementById("themeToggle");
+
+const clickSound = document.getElementById("clickSound");
+
+let expr = "";
+
+let history = JSON.parse(localStorage.getItem("calcHistory")) || [];
+
+renderHistory();
+
+/* =====================
+SAFE EVAL
+===================== */
+
+function safeEval(s){
+
+  const allowed = /^[0-9+\-*/().%\s]*$/;
+
+  if(!allowed.test(s)) throw new Error();
+
+  s = s.replace(/(\d+(\.\d+)?)\s*%/g, "($1/100)");
+
+  return Function("return (" + s + ")")();
+}
+
+/* =====================
+DISPLAY
+===================== */
+
+function setDisplay(e,v){
+
+  exprEl.textContent = e;
+
+  outEl.textContent = v;
+}
+
+/* =====================
+HISTORY
+===================== */
+
+function saveHistory(){
+
+  localStorage.setItem("calcHistory", JSON.stringify(history));
+}
+
+function pushHistory(e,r){
+
+  history.unshift({expr:e,res:r});
+
+  history = history.slice(0,20);
+
+  saveHistory();
+
+  renderHistory();
+}
+
+function renderHistory(){
+
+  historyEl.innerHTML = "";
+
+  if(history.length === 0){
+
+    historyEl.innerHTML = "<div style='opacity:.5;font-size:12px'>No history yet</div>";
+
+    return;
+  }
+
+  history.forEach(item=>{
+
+    const row = document.createElement("div");
+
+    row.className = "historyItem";
+
+    row.innerHTML = `
+      <span>${item.expr}</span>
+      <strong>${item.res}</strong>
+    `;
+
+    historyEl.appendChild(row);
+
+  });
+
+}
+
+clearHistoryBtn.addEventListener("click",()=>{
+
+  history = [];
+
+  saveHistory();
+
+  renderHistory();
+
+});
+
+/* =====================
+BUTTONS
+===================== */
+
+function resetAll(){
+
+  expr = "";
+
+  setDisplay("", "0");
+}
+
+function backspace(){
+
+  expr = expr.slice(0,-1);
+
+  setDisplay(expr, expr || "0");
+}
+
+function addNumber(n){
+
+  if(n === "."){
+
+    const parts = expr.split(/[\+\-\*\/]/);
+
+    const current = parts[parts.length - 1];
+
+    if(current.includes(".")) return;
+  }
+
+  expr += n;
+
+  setDisplay(expr, expr);
+}
+
+function addOperator(op){
+
+  if(!expr){
+
+    if(op === "-"){
+
+      expr = "-";
+
+      setDisplay(expr,expr);
+    }
+
+    return;
+  }
+
+  if(/[+\-*/]$/.test(expr)){
+
+    expr = expr.slice(0,-1) + op;
+
+  }else{
+
+    expr += op;
+  }
+
+  setDisplay(expr, expr);
+}
+
+function percent(){
+
+  expr += "%";
+
+  setDisplay(expr, expr);
+}
+
+function equals(){
+
+  try{
+
+    if(!expr) return;
+
+    const result = safeEval(expr);
+
+    if(!isFinite(result)) throw new Error();
+
+    const rounded = Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+
+    pushHistory(expr, rounded);
+
+    setDisplay("", rounded);
+
+    expr = String(rounded);
+
+  }catch{
+
+    setDisplay("", "Error");
+
+    expr = "";
+  }
+
+}
+
+/* =====================
+SCIENTIFIC
+===================== */
+
+function scientific(type){
+
+  try{
+
+    let value;
+
+    // PI
+    if(type === "pi"){
+
+      expr = String(Math.PI);
+
+      setDisplay("", expr);
+
+      return;
+    }
+
+    // evaluate current expression
+    if(expr){
+
+      value = safeEval(expr);
+
+    }else{
+
+      value = 0;
+    }
+
+    switch(type){
+
+      case "sin":
+        expr = String(
+          Math.sin(value * Math.PI / 180)
+        );
+      break;
+
+      case "cos":
+        expr = String(
+          Math.cos(value * Math.PI / 180)
+        );
+      break;
+
+      case "tan":
+        expr = String(
+          Math.tan(value * Math.PI / 180)
+        );
+      break;
+
+      case "sqrt":
+        expr = String(
+          Math.sqrt(value)
+        );
+      break;
+
+    }
+
+    setDisplay("", expr);
+
+  }catch(e){
+
+    setDisplay("", "Error");
+
+    expr = "";
+  }
+
+}
+
+/* =====================
+EVENTS
+===================== */
+
+const buttons = document.querySelectorAll("button");
+
+buttons.forEach(btn=>{
+
+  btn.addEventListener("pointermove",(e)=>{
+
+    const r = btn.getBoundingClientRect();
+
+    const mx = ((e.clientX-r.left)/r.width)*100;
+
+    const my = ((e.clientY-r.top)/r.height)*100;
+
+    btn.style.setProperty("--mx", mx+"%");
+
+    btn.style.setProperty("--my", my+"%");
+  });
+
+  btn.addEventListener("click",()=>{
+
+   if(clickSound){
+
+  clickSound.currentTime = 0;
+
+  clickSound.play().catch(()=>{});
+
+}
+
+    const num = btn.getAttribute("data-num");
+
+    const op = btn.getAttribute("data-op");
+
+    const action = btn.getAttribute("data-action");
+
+    if(num !== null) return addNumber(num);
+
+    if(op !== null) return addOperator(op);
+
+    if(action === "clear") return resetAll();
+
+    if(action === "back") return backspace();
+
+    if(action === "percent") return percent();
+
+    if(action === "equals") return equals();
+
+  });
+
+});
+
+/* =====================
+THEME
+===================== */
+
+themeToggle.addEventListener("click",()=>{
+
+  document.body.classList.toggle("light");
+
+  if(document.body.classList.contains("light")){
+
+    localStorage.setItem("theme","light");
+
+    themeToggle.textContent = "☀️";
+
+  }else{
+
+    localStorage.setItem("theme","dark");
+
+    themeToggle.textContent = "🌙";
+  }
+
+});
+
+const savedTheme = localStorage.getItem("theme");
+
+if(savedTheme === "light"){
+
+  document.body.classList.add("light");
+
+  themeToggle.textContent = "☀️";
+}
+
+/* =====================
+KEYBOARD
+===================== */
+
+window.addEventListener("keydown",(e)=>{
+
+  const k = e.key;
+
+  if((k >= "0" && k <= "9") || k === "."){
+
+    e.preventDefault();
+
+    return addNumber(k);
+  }
+
+  if(k === "Enter" || k === "="){
+
+    e.preventDefault();
+
+    return equals();
+  }
+
+  if(k === "Backspace"){
+
+    e.preventDefault();
+
+    return backspace();
+  }
+
+  if(k === "Escape"){
+
+    e.preventDefault();
+
+    return resetAll();
+  }
+
+  if(k === "+" || k === "-" || k === "*" || k === "/"){
+
+    e.preventDefault();
+
+    return addOperator(k);
+  }
+
+  if(k === "%"){
+
+    e.preventDefault();
+
+    return percent();
+  }
+
+});
+
+setDisplay("", "0");
+
+</script>
+
+</body>
+</html>
