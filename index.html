@@ -382,6 +382,13 @@ button:hover::after{
 
 }
 
+.historyItem{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+}
+
 </style>
 </head>
 
@@ -481,7 +488,7 @@ button:hover::after{
 </div>
 
 <audio id="clickSound" preload="auto">
-  <source src="C:\Users\srile\Downloads\mixkit-modern-technology-select-3124.wav" type="audio/wav">
+  <source src="./click.wav" type="audio/wav">
 </audio>
 
 <script>
@@ -684,70 +691,55 @@ function equals(){
 /* =====================
 SCIENTIFIC
 ===================== */
-
+ 
 function scientific(type){
 
   try{
 
     let value;
 
-    // PI
     if(type === "pi"){
-
       expr = String(Math.PI);
-
       setDisplay("", expr);
-
+      pushHistory("π", expr);
       return;
     }
 
-    // evaluate current expression
-    if(expr){
+    value = expr ? safeEval(expr) : 0;
 
-      value = safeEval(expr);
-
-    }else{
-
-      value = 0;
-    }
+    let result;
 
     switch(type){
 
       case "sin":
-        expr = String(
-          Math.sin(value * Math.PI / 180)
-        );
-      break;
+        result = Math.sin(value * Math.PI / 180);
+        pushHistory(`sin(${value})`, result);
+        break;
 
       case "cos":
-        expr = String(
-          Math.cos(value * Math.PI / 180)
-        );
-      break;
+        result = Math.cos(value * Math.PI / 180);
+        pushHistory(`cos(${value})`, result);
+        break;
 
       case "tan":
-        expr = String(
-          Math.tan(value * Math.PI / 180)
-        );
-      break;
+        result = Math.tan(value * Math.PI / 180);
+        pushHistory(`tan(${value})`, result);
+        break;
 
       case "sqrt":
-        expr = String(
-          Math.sqrt(value)
-        );
-      break;
-
+        result = Math.sqrt(value);
+        pushHistory(`√(${value})`, result);
+        break;
     }
 
+    expr = String(result);
     setDisplay("", expr);
 
-  }catch(e){
+  }catch{
 
     setDisplay("", "Error");
-
     expr = "";
   }
-
 }
 
 /* =====================
